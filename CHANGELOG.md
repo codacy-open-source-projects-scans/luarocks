@@ -1,3 +1,18 @@
+## LuaRocks 3.13.0
+
+> Released 28/Dec/2025
+
+* Supports Lua 5.5!
+* documentation fixes
+* fix: check_lua_libdir reads liblua in binary mode
+
+## LuaRocks 3.12.2
+
+> Released 27/Jun/2025
+
+* fix: create cache_dir when local_cache exists
+* fetch: update cachefile and checkfile on temp local_cache
+
 ## LuaRocks 3.12.1
 
 > Released 17/Jun/2025
@@ -9,19 +24,6 @@
   function signature, we'll revert this as a deprecated
   function, to be removed in LuaRocks 4.0. No other
   reverts are planned for the sake of restoring private APIs.
-
-## LuaRocks 0.3.1
-
-> Released 18/Dec/2007
-
-* Improved search: results now feature separate lists for source and binary rocks.
-* Windows support for the "module" build type (using Visual Studio).
-* Many assorted bugfixes.
-
-
-## LuaRocks 0.3
-
-> ReleA
 
 ## LuaRocks 3.12.0
 
