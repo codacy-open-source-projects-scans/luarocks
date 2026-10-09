@@ -7,7 +7,7 @@ MINGW_SYSROOT=/usr/lib/mingw-w64-sysroot/$(MINGW_PREFIX)
 OPENSSL_PLATFORM=mingw
 # Versions of dependencies
 LIBLUA_VERSION=5.4.3
-OPENSSL_VERSION=1.1.1w
+OPENSSL_VERSION=3.6.5
 ZLIB_VERSION=1.3.1
 BZIP2_VERSION=1.0.8
 
@@ -15,7 +15,7 @@ WINDOWS_DEPS_DIR=windows-deps-$(MINGW_PREFIX)
 BUILD_WINDOWS_DEPS_DIR=build-windows-deps-$(MINGW_PREFIX)
 BUILD_WINDOWS_BINARY_DIR=build-windows-binary-$(MINGW_PREFIX)
 
-windows-binary: $(WINDOWS_DEPS_DIR)/lib/liblua.a $(WINDOWS_DEPS_DIR)/lib/libssl.a $(WINDOWS_DEPS_DIR)/lib/libz.a $(WINDOWS_DEPS_DIR)/lib/libbz2.a
+windows-binary: $(WINDOWS_DEPS_DIR)/lib/liblua.a $(WINDOWS_DEPS_DIR)/lib/libssl.a $(WINDOWS_DEPS_DIR)/lib/libcrypto.a $(WINDOWS_DEPS_DIR)/lib/libzlib.a $(WINDOWS_DEPS_DIR)/lib/libbz2.a
 	STATIC_GCC_AR=$(MINGW_PREFIX)-ar \
 	STATIC_GCC_RANLIB=$(MINGW_PREFIX)-ranlib \
 	STATIC_GCC_CC=$(MINGW_PREFIX)-gcc \
@@ -39,17 +39,20 @@ $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION).tar.gz:
 	cd $(BUILD_WINDOWS_DEPS_DIR) && curl -OL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz
 $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION): $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION).tar.gz
 	cd $(BUILD_WINDOWS_DEPS_DIR) && tar zxvpf openssl-$(OPENSSL_VERSION).tar.gz
-$(WINDOWS_DEPS_DIR)/lib/libssl.a: $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION)
-	cd $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION) && ./Configure --prefix=$(CURDIR)/$(WINDOWS_DEPS_DIR) --cross-compile-prefix=$(MINGW_PREFIX)- $(OPENSSL_PLATFORM)
+$(WINDOWS_DEPS_DIR)/lib/libssl.a $(WINDOWS_DEPS_DIR)/lib/libcrypto.a: $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION)
+	cd $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION) && ./Configure $(OPENSSL_PLATFORM) --prefix=$(CURDIR)/$(WINDOWS_DEPS_DIR) --cross-compile-prefix=$(MINGW_PREFIX)- no-apps no-tests no-winstore
 	$(MAKE) -C "$(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION)"
 	$(MAKE) -C "$(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION)" install_sw
+	mkdir -p $(WINDOWS_DEPS_DIR)/lib
+	cd $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION) && cp libssl.a ../../$(WINDOWS_DEPS_DIR)/lib
+	cd $(BUILD_WINDOWS_DEPS_DIR)/openssl-$(OPENSSL_VERSION) && cp libcrypto.a ../../$(WINDOWS_DEPS_DIR)/lib
 
 $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION).tar.gz:
 	mkdir -p $(@D)
-	cd $(BUILD_WINDOWS_DEPS_DIR) && curl -OL https://www.zlib.net/fossils/zlib-$(ZLIB_VERSION).tar.gz
+	cd $(BUILD_WINDOWS_DEPS_DIR) && curl -vOL --fail-with-body --retry 5 https://github.com/madler/zlib/releases/download/v$(ZLIB_VERSION)/zlib-$(ZLIB_VERSION).tar.gz
 $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION): $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION).tar.gz
 	cd $(BUILD_WINDOWS_DEPS_DIR) && tar zxvpf zlib-$(ZLIB_VERSION).tar.gz
-$(WINDOWS_DEPS_DIR)/lib/libz.a: $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION)
+$(WINDOWS_DEPS_DIR)/lib/libzlib.a: $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION)
 	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && sed -ie "s,dllwrap,$(MINGW_PREFIX)-dllwrap," win32/Makefile.gcc
 	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && ./configure --prefix=$(CURDIR)/$(WINDOWS_DEPS_DIR) --static
 	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && $(MAKE) -f win32/Makefile.gcc CC=$(MINGW_PREFIX)-gcc AR=$(MINGW_PREFIX)-ar RC=$(MINGW_PREFIX)-windres STRIP=$(MINGW_PREFIX)-strip IMPLIB=libz.dll.a
@@ -57,7 +60,7 @@ $(WINDOWS_DEPS_DIR)/lib/libz.a: $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION)
 	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && cp zlib.h zconf.h ../../$(WINDOWS_DEPS_DIR)/include
 	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && $(MINGW_PREFIX)-strip -g libz.a
 	mkdir -p $(@D)
-	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && cp libz.a ../../$(WINDOWS_DEPS_DIR)/lib
+	cd $(BUILD_WINDOWS_DEPS_DIR)/zlib-$(ZLIB_VERSION) && cp libz.a ../../$(WINDOWS_DEPS_DIR)/lib/libzlib.a
 
 $(BUILD_WINDOWS_DEPS_DIR)/bzip2-$(BZIP2_VERSION).tar.gz:
 	mkdir -p $(@D)
